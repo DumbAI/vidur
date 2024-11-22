@@ -20,3 +20,6 @@ ExecutionTimePredictorRegistry.register(
 ExecutionTimePredictorRegistry.register(
     ExecutionTimePredictorType.LINEAR_REGRESSION, LinearRegressionExecutionTimePredictor
 )
+# ExecutionTimePredictorRegistry.register(
+#     ExecutionTimePredictorType.API, APIExecutionTimePredictor
+# )

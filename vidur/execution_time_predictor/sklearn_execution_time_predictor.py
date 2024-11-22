@@ -582,7 +582,6 @@ class SklearnExecutionTimePredictor(BaseExecutionTimePredictor):
         models = self._train_compute_models()
         models.update(self._train_cpu_overhead_models())
         models.update(self._train_attention_layer_models())
-
         return models
 
     def _predict_for_compute_models(self) -> Dict[str, Any]:

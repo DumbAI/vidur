@@ -1,7 +1,38 @@
 from vidur.entities.base_entity import BaseEntity
 
+class BaseExecutionTime(BaseEntity):
 
-class ExecutionTime(BaseEntity):
+    @property
+    def total_time(self) -> float:
+        # return in seconds
+        return 0.0
+
+class APIExecutionTime(BaseExecutionTime):
+
+    def __init__(self, prefill_time: float, output_time: float) -> None:
+        self._prefill_time = prefill_time
+        self._output_time = output_time
+
+    def prefill_time(self) -> float:
+        """
+        Time to first token
+        """
+        return self._prefill_time
+
+    def output_time(self) -> float:
+        """
+        Time to output all tokens
+        """
+        return self._output_time
+
+    @property
+    def total_time(self) -> float:
+        # return in seconds
+        return self.prefill_time() + self.output_time()
+
+
+
+class ExecutionTime(BaseExecutionTime):
     def __init__(
         self,
         num_layers_per_pipeline_stage: int,
@@ -188,6 +219,7 @@ class ExecutionTime(BaseEntity):
         return (
             pipeline_stage_execution_time + self.pipeline_parallel_communication_time
         ) * 1e-3
+
 
     @property
     def model_time_ms(self) -> float:

@@ -8,8 +8,10 @@ from vidur.scheduler.replica_scheduler.replica_scheduler_registry import (
     ReplicaSchedulerRegistry,
 )
 
+from vidur.scheduler.global_scheduler.base_scheduler import BaseScheduler
 
-class BaseGlobalScheduler(ABC):
+
+class BaseGlobalScheduler(BaseScheduler):
     def __init__(self, config: SimulationConfig, replicas: Dict[int, Replica]):
         self._config = config
         self._replicas = replicas
@@ -56,7 +58,3 @@ class BaseGlobalScheduler(ABC):
             replica_scheduler.is_empty()
             for replica_scheduler in self._replica_schedulers.values()
         )
-
-    @abstractmethod
-    def schedule(self) -> List[Tuple[int, Request]]:
-        pass
