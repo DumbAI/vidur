@@ -2,13 +2,12 @@ python -m vidur.main  \
 --replica_config_device b200 \
 --replica_config_model_name meta-llama/Llama-2-70b-hf \
 --cluster_config_num_replicas 1 \
---replica_config_tensor_parallel_size 1 \
+--replica_config_tensor_parallel_size 2 \
 --replica_config_num_pipeline_stages 1 \
---request_generator_config_type synthetic \
---synthetic_request_generator_config_num_requests 512  \
+--request_generator_config_type trace_replay \
 --length_generator_config_type trace \
 --trace_request_length_generator_config_max_tokens 16384 \
---trace_request_length_generator_config_trace_file ./data/processed_traces/splitwise_conv.csv \
+--trace_request_length_generator_config_trace_file ./data/processed_traces/Azure_conv.csv \
 --interval_generator_config_type poisson \
 --poisson_request_interval_generator_config_qps 6.45 \
 --replica_scheduler_config_type sarathi  \
