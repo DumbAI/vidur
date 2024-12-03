@@ -11,12 +11,14 @@ logger = init_logger(__name__)
 class BaseDeviceSKUConfig(BaseFixedConfig):
     fp16_tflops: int
     total_memory_gb: int
-
+    memory_bandwidth_gb_per_sec: int
+    
 
 @dataclass
 class A40DeviceSKUConfig(BaseDeviceSKUConfig):
     fp16_tflops: int = 150
     total_memory_gb: int = 45
+    memory_bandwidth_gb_per_sec: int = 1555
 
     @staticmethod
     def get_type():
@@ -27,6 +29,7 @@ class A40DeviceSKUConfig(BaseDeviceSKUConfig):
 class A100DeviceSKUConfig(BaseDeviceSKUConfig):
     fp16_tflops: int = 312
     total_memory_gb: int = 80
+    memory_bandwidth_gb_per_sec: int = 1555
 
     @staticmethod
     def get_type():
@@ -37,6 +40,7 @@ class A100DeviceSKUConfig(BaseDeviceSKUConfig):
 class H100DeviceSKUConfig(BaseDeviceSKUConfig):
     fp16_tflops: int = 1000
     total_memory_gb: int = 80
+    memory_bandwidth_gb_per_sec: int = 3.35*1024
 
     @staticmethod
     def get_type():
@@ -46,6 +50,7 @@ class H100DeviceSKUConfig(BaseDeviceSKUConfig):
 class B200DeviceSKUConfig(BaseDeviceSKUConfig):
     fp16_tflops: int = 2250
     total_memory_gb: int = 192
+    memory_bandwidth_gb_per_sec: int = 7.7*1024
 
     @staticmethod
     def get_type():
@@ -53,8 +58,9 @@ class B200DeviceSKUConfig(BaseDeviceSKUConfig):
 
 @dataclass
 class B300DeviceSKUConfig(BaseDeviceSKUConfig):
-    fp16_tflops: int = 2700
+    fp16_tflops: int = 2250
     total_memory_gb: int = 288
+    memory_bandwidth_gb_per_sec: int = 8*1024
 
     @staticmethod
     def get_type():
