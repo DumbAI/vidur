@@ -14,15 +14,6 @@ from vidur.config import (
     ReplicaConfig,
 )
 
-def roof_line_execution_time(io_bandwidth_bytes_per_sec: float, data_size_bytes: float, tflops_per_sec: float, total_tflops: float) -> float:
-    # time is measured in ms
-    execute_time_sec = max(
-        (data_size_bytes / io_bandwidth_bytes_per_sec), 
-        (total_tflops / tflops_per_sec)
-    )
-    execute_time_ms = execute_time_sec * 1e3
-    return execute_time_ms
-
 def get_dtype_bytes(dtype: str) -> float:
     if dtype == 'fp32':
         return 4
@@ -33,6 +24,17 @@ def get_dtype_bytes(dtype: str) -> float:
     elif dtype == 'fp4':
         return 0.5
     raise ValueError(f"Unknown dtype: {dtype}")
+
+
+def roof_line_execution_time(io_bandwidth_bytes_per_sec: float, data_size_bytes: float, tflops_per_sec: float, total_tflops: float) -> float:
+    # time is measured in ms
+    execute_time_sec = max(
+        (data_size_bytes / io_bandwidth_bytes_per_sec), 
+        (total_tflops / tflops_per_sec)
+    )
+    execute_time_ms = execute_time_sec * 1e3
+    return execute_time_ms
+
 
 
 class AnalyticExecutionTimePredictor(BaseExecutionTimePredictor):
@@ -73,15 +75,6 @@ class AnalyticExecutionTimePredictor(BaseExecutionTimePredictor):
             total_flops=total_flops
         )
 
-    def _get_batch_input_matmul_execution_time(self, batch_size: int, m: int, k:int, n: int, dtype: str) -> float:
-        # assuming batch input matmul only load weights W(k,n) once from memory
-        return self._get_matmul_execution_time(
-            m=batch_size * m,
-            k=k,
-            n=n,
-            dtype=dtype
-        )
-
     def _get_attention_rope_execution_time(self, batch: Batch) -> float:
         total_num_tokens = batch._total_num_tokens
         embedding_dim = self._model_config.embedding_dim
@@ -117,9 +110,8 @@ class AnalyticExecutionTimePredictor(BaseExecutionTimePredictor):
         ) 
         
         for decode_batch in range(int(num_decode_tokens // batch_size)):
-            q_proj_time += self._get_batch_input_matmul_execution_time(
-                batch_size=batch_size,
-                m=1,
+            q_proj_time += self._get_matmul_execution_time(
+                m=batch_size,
                 k=embedding_dim,
                 n=embedding_dim,
                 dtype='fp16'
@@ -135,9 +127,8 @@ class AnalyticExecutionTimePredictor(BaseExecutionTimePredictor):
         ) 
         
         for decode_batch in range(int(num_decode_tokens // batch_size)):
-            kv_proj_time += self._get_batch_input_matmul_execution_time(
-                batch_size=batch_size,
-                m=1,
+            kv_proj_time += self._get_matmul_execution_time(
+                m=batch_size,
                 k=embedding_dim,
                 n=kv_head_concat_size,
                 dtype='fp16'
@@ -156,6 +147,8 @@ class AnalyticExecutionTimePredictor(BaseExecutionTimePredictor):
         
         total_time = 0.0
         for request in batch.requests:
+            if request.is_prefill_complete:
+                continue
             prefill_tokens = request.num_prefill_tokens
             total_time += self._get_matmul_execution_time(
                 m=prefill_tokens,
@@ -183,16 +176,14 @@ class AnalyticExecutionTimePredictor(BaseExecutionTimePredictor):
 
         total_time = 0.0
         for decode_batch in range(num_decode_batches):
-            total_time += self._get_batch_input_matmul_execution_time(
-                batch_size=batch_size,
-                m=1,
+            total_time += self._get_matmul_execution_time(
+                m=batch_size,
                 k=embedding_dim,
                 n=max_prefill_len,
                 dtype='fp16'
             )
-            total_time += self._get_batch_input_matmul_execution_time(
-                batch_size=batch_size,
-                m=1,
+            total_time += self._get_matmul_execution_time(
+                m=batch_size,
                 k=max_prefill_len,
                 n=embedding_dim,
                 dtype='fp16'
@@ -217,9 +208,8 @@ class AnalyticExecutionTimePredictor(BaseExecutionTimePredictor):
 
         # decoding time
         for decode_batch in range(int(num_decode_tokens // batch_size)):
-            total_time += self._get_batch_input_matmul_execution_time(
-                batch_size=batch_size,
-                m=1,
+            total_time += self._get_matmul_execution_time(
+                m=batch_size,
                 k=embedding_dim,
                 n=embedding_dim,
                 dtype='fp16'
@@ -263,9 +253,8 @@ class AnalyticExecutionTimePredictor(BaseExecutionTimePredictor):
 
         # decoding time
         for decode_batch in range(int(num_decode_tokens // batch_size)):
-            total_time += self._get_batch_input_matmul_execution_time(
-                batch_size=batch_size,
-                m=1,
+            total_time += self._get_matmul_execution_time(
+                m=batch_size,
                 k=embedding_dim,
                 n=mlp_hidden_dim,
                 dtype='fp16'
@@ -291,9 +280,8 @@ class AnalyticExecutionTimePredictor(BaseExecutionTimePredictor):
 
         # decoding time
         for decode_batch in range(int(num_decode_tokens // batch_size)):
-            total_time += self._get_batch_input_matmul_execution_time(
-                batch_size=batch_size,
-                m=1,
+            total_time += self._get_matmul_execution_time(
+                m=batch_size,
                 k=mlp_hidden_dim,
                 n=embedding_dim,
                 dtype='fp16'
@@ -335,7 +323,6 @@ class AnalyticExecutionTimePredictor(BaseExecutionTimePredictor):
         total_num_tokens = batch.total_num_tokens
         data_size_bytes = get_dtype_bytes('fp16') * (total_num_tokens * embedding_dim) * 2
         total_flops = total_num_tokens * embedding_dim
-        
         total_time = self._get_execution_time(
             data_size_bytes=data_size_bytes, 
             total_flops=total_flops

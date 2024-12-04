@@ -95,7 +95,7 @@ class ExecutionTime(BaseExecutionTime):
             + self._tensor_parallel_communication_time
             + self._mlp_norm_time
         )
-        print(f"mlp layer execution time: {mlp_layer_execution_time}")
+        print(f"mlp layer execution time ms: {mlp_layer_execution_time}")
         return mlp_layer_execution_time
 
     def _get_attention_layer_execution_time(self) -> float:
@@ -109,7 +109,7 @@ class ExecutionTime(BaseExecutionTime):
             + self._tensor_parallel_communication_time
             + self._attn_norm_time
         )
-        print(f"attention layer execution time: {attention_layer_execution_time}")
+        print(f"attention layer execution time ms: {attention_layer_execution_time}")
         return attention_layer_execution_time
 
     def _get_block_execution_time(self) -> float:
