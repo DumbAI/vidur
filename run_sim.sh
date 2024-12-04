@@ -13,6 +13,7 @@ python -m vidur.main  \
 --replica_scheduler_config_type sarathi  \
 --sarathi_scheduler_config_batch_size_cap 512  \
 --sarathi_scheduler_config_chunk_size 512 \
+--execution_time_predictor_config_type analytical \
 --random_forrest_execution_time_predictor_config_prediction_max_prefill_chunk_size 16384 \
 --random_forrest_execution_time_predictor_config_prediction_max_batch_size 512 \
 --random_forrest_execution_time_predictor_config_prediction_max_tokens_per_request 16384

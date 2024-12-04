@@ -269,6 +269,8 @@ class MetricsStore:
             wand_table = wandb.Table(dataframe=merged_df)
             wandb.log({f"{file_name}_table": wand_table}, step=0)
 
+        return merged_df
+
     def _store_bar_plot(
         self,
         base_path: str,
@@ -374,12 +376,18 @@ class MetricsStore:
             self._request_metrics_time_distributions.values()
         ) + list(self._request_metrics_histogram.values())
 
-        self._save_as_csv(
+        df = self._save_as_csv(
             dataseries_list=all_request_metrics,
             key_to_join=REQUEST_ID_STR,
             base_path=self._config.output_dir,
             file_name="request_metrics",
         )
+
+        df["request_model_execution_time_per_token"] = (
+            df["request_model_execution_time"] / df["request_num_tokens"]
+        )
+
+        print('request_model_execution_time_per_token', df["request_model_execution_time_per_token"].mean())
 
         for dataseries in self._request_metrics_histogram.values():
             dataseries.plot_histogram(base_plot_path, dataseries._y_name)

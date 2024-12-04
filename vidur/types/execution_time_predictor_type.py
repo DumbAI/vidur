@@ -5,4 +5,5 @@ class ExecutionTimePredictorType(BaseIntEnum):
     DUMMY = 1
     RANDOM_FORREST = 2
     LINEAR_REGRESSION = 3
-    API = 4
+    ANALYTICAL = 4
+    API = 5

@@ -605,6 +605,13 @@ class RandomForrestExecutionTimePredictorConfig(BaseExecutionTimePredictorConfig
     def get_type():
         return ExecutionTimePredictorType.RANDOM_FORREST
 
+@dataclass
+class AnalyticalExecutionTimePredictorConfig(BaseExecutionTimePredictorConfig):
+
+    @staticmethod
+    def get_type():
+        return ExecutionTimePredictorType.ANALYTICAL
+
 
 @dataclass
 class ClusterConfig:
@@ -647,6 +654,7 @@ class SimulationConfig(ABC):
     )
     execution_time_predictor_config: BaseExecutionTimePredictorConfig = field(
         default_factory=RandomForrestExecutionTimePredictorConfig,
+        # default_factory=AnalyticalExecutionTimePredictorConfig,
         metadata={"help": "Execution time predictor config."},
     )
     metrics_config: MetricsConfig = field(
