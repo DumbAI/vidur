@@ -124,35 +124,44 @@ class AnalyticExecutionTimePredictor(BaseExecutionTimePredictor):
         total_time = 0.0
         for request in batch.requests:
             prefill_tokens = request.num_prefill_tokens
-            total_flops = 2*prefill_tokens*embedding_dim*prefill_tokens + 2*prefill_tokens*prefill_tokens*embedding_dim
-            data_size_bytes = get_dtype_bytes('fp16') * ((prefill_tokens*embedding_dim + embedding_dim*prefill_tokens + prefill_tokens*prefill_tokens) + (prefill_tokens*prefill_tokens + prefill_tokens*embedding_dim + prefill_tokens*embedding_dim))
+            total_time += self._get_matmul_execution_time(
+                m=prefill_tokens,
+                k=embedding_dim,
+                n=prefill_tokens,
+                dtype='fp16'
+            )
             
-            total_time += self._get_execution_time(
-                data_size_bytes=data_size_bytes, 
-                total_flops=total_flops
-            ) 
+            total_time += self._get_matmul_execution_time(
+                m=prefill_tokens,
+                k=prefill_tokens,
+                n=embedding_dim,
+                dtype='fp16'
+            )
 
         return total_time
     
     def _get_attention_decode_execution_time(self, batch: Batch) -> float:
         embedding_dim = self._model_config.embedding_dim
-        
-        total_time = 0.0
-        for request in batch.requests:
-            n = request.total_tokens
-            total_flops = 2*1*embedding_dim*n + 2*1*n*embedding_dim
-            data_size_bytes = get_dtype_bytes('fp16') * (
-                (1*embedding_dim + embedding_dim*n + 1*n) + (1*n + n*embedding_dim + 1*embedding_dim)
-                )
-            
-            time_sec_per_token =  self._get_execution_time(
-                data_size_bytes=data_size_bytes, 
-                total_flops=total_flops
-            ) 
-            output_tokens = request.num_decode_tokens
-            total_time += time_sec_per_token * output_tokens
+        batch_size = len(batch.requests)
+        max_prefill_len = max([request.num_prefill_tokens for request in batch.requests])
+        max_decode_len = max([request.num_decode_tokens for request in batch.requests])
+        time_sec_per_batch = self._get_matmul_execution_time(
+            m=batch_size,
+            k=embedding_dim,
+            n=max_prefill_len,
+            dtype='fp16'
+        ) + self._get_matmul_execution_time(
+            m=batch_size,
+            k=max_prefill_len,
+            n=embedding_dim,
+            dtype='fp16'
+        )
+        time_sec_per_token =  self._get_execution_time(
+            data_size_bytes=data_size_bytes, 
+            total_flops=total_flops
+        ) 
 
-        return total_time
+        return time_sec_per_token * max_decode_len
     
     def _get_attention_layer_post_proj_execution_time(self, batch: Batch) -> float:
         # projection time during decoding phase
