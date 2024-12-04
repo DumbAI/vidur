@@ -219,6 +219,7 @@ class ExecutionTime(BaseExecutionTime):
         pipeline_stage_execution_time = (
             block_execution_time * self._num_layers_per_pipeline_stage
         )
+        
         # return in seconds
         return (
             pipeline_stage_execution_time + self.pipeline_parallel_communication_time
